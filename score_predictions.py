@@ -3,7 +3,9 @@ module docstring
 """
 
 import os
+import sys
 from collections import Counter, namedtuple
+import json
 import numpy as np
 import pandas as pd
 import sklearn.metrics
@@ -48,8 +50,24 @@ def get_accuracy(dataframe):
     return sklearn.metrics.accuracy_score(actual, predicted)
 
 
-def make_cm(dataframe, norm=True):
-    """create a confusion matrix"""
+def make_confusion_matrix(dataframe, norm=True):
+    """
+    create a confusion matrix and class labels
+
+    Parameters:
+    -----------
+    dataframe: pandas.dataframe
+    norm: Boolean
+        whether to normalise the confusion matrix
+
+    Returns:
+    --------
+    nametuple(cm, labels)
+    cm: numpy array
+        confusion matrix
+    labels: list
+        class labels in correct order
+    """
     confusion_matrix = namedtuple("ConfusionMatrix", ["cm", "labels"])
     result = get_actual_predicted(dataframe)
     labels = get_class_labels(dataframe)
@@ -60,14 +78,19 @@ def make_cm(dataframe, norm=True):
     return confusion_matrix(cm, labels)
 
 
-
-
 def main(path=None):
+    """print JSON to stdout"""
     if path is None:
-        path = sys.arv[1]
-    # TODO
-    pass
-
+        path = sys.argv[1]
+    data_dict = create_data_dict(path)
+    output_dict = {}
+    for cell_line, dataframe in data_dict.items():
+        confusion_matrix = make_confusion_matrix(dataframe)
+        accuracy = get_accuracy(dataframe)
+        output_dict[cell_line] = {"acc": accuracy,
+                                  "cm": confusion_matrix.cm.tolist(),
+                                  "labels": confusion_matrix.labels}
+    json.dump(output_dict, sys.stdout, indent=2)
 
 if __name__ == "__main__":
     main()
