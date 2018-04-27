@@ -67,7 +67,8 @@ def make_dataloaders(datasets_dict):
     dataloader_dict = {}
     for phase in ["train", "test"]:
         dataloader_dict[phase] = torch.utils.data.DataLoader(
-            datasets_dict[phase], batch_size=BATCH_SIZE, shuffle=True,
+            datasets_dict[phase], batch_size=BATCH_SIZE,
+            shuffle=True if phase == "train" else False,
             num_workers=NUM_WORKERS
         )
     return dataloader_dict
