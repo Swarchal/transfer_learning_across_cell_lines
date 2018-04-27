@@ -46,20 +46,23 @@ from torch.utils.data import Dataset, DataLoader
 
 class CellDataset(torch.utils.data.Dataset):
 
-    def __init__(self, data_dir):
+    def __init__(self, data_dir, transforms=None):
         self.data_dir = data_dir
         self.image_list = self.get_image_list(data_dir)
         self.label_dict = self.generate_label_dict(self.image_list)
         self.labels = self.get_unique_labels(self.image_list)
+        self.transforms = transforms
 
     def __len__(self):
         return len(self.image_list)
 
     def __getitem__(self, index):
         img = np.load(self.image_list[index])
-        img = self.transform(img)
+        img = self.reshape(img)
+        if self.transforms is not None:
+            img = self.transforms(img)
         label_name = self.get_class_label(self.image_list[index])
-        label_index = torch.LongTensor([self.label_dict[label_name]])
+        label_index = torch.IntTensor([self.label_dict[label_name]])
         return img, label_index
 
     @staticmethod
@@ -86,9 +89,9 @@ class CellDataset(torch.utils.data.Dataset):
         return img_path.split(os.sep)[-2]
 
     @staticmethod
-    def transform(img):
+    def reshape(img):
         """
-        transform 300x300x5 numpy array into
+        reshape a 300x300x5 numpy array into
         a 1x5x244x244 torch Tensor
         """
         # resize image to from 300*300*5 => 244*244*5, also converts to float
