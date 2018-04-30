@@ -19,15 +19,12 @@ cell_lines = ["MDA-231",
 if cell_line_to_rm not in cell_lines:
     raise ValueError("unknwown cell-line, options are :{}".format(cell_lines))
 
-
 cell_lines.remove(cell_line_to_rm)
 
-new_dir_name = "/exports/eddie/scratch/s1027820/chopped/data_excluding_{}/"
+EXISTING_DIR = "/exports/igmm/datastore/Drug-Discovery/scott/2018-04-24_nncell_data_300_{}/"
 
-existing_dir = "/exports/igmm/datastore/Drug-Discovery/scott/nncell_data_300_{}/"
-
-rsync_commands = []
+NEW_DIR_NAME = "/exports/eddie/scratch/s1027820/chopped_array/data_excluding_{}/"
 
 for cell_line in cell_lines:
-    cmd = "rsync -a " + existing_dir.format(cell_line) + " " + new_dir_name.format(cell_line_to_rm)
+    cmd = "rsync -a " + EXISTING_DIR.format(cell_line) + " " + NEW_DIR_NAME.format(cell_line_to_rm)
     sys.stdout.write(cmd + "\n")
