@@ -84,8 +84,7 @@ class Bottleneck(nn.Module):
 
 class ResNet(nn.Module):
 
-    def __init__(self, block, phase, layers, dropout=False, num_classes=1000):
-        self.training = True if phase == "train" else False
+    def __init__(self, block, layers, dropout=False, num_classes=1000):
         self.dropout = dropout
         self.inplanes = 64
         super(ResNet, self).__init__()
@@ -138,12 +137,11 @@ class ResNet(nn.Module):
         x = self.layer4(x)
         ##
         x = self.avgpool(x)
-        # 50% dropout in final fully connected layer during training
         if self.dropout:
+            # 50% dropout in final fully connected layer during training
             x = F.dropout(x, p=0.5, training=self.training)
         x = x.view(x.size(0), -1)
         x = self.fc(x)
-
         return x
 
 
