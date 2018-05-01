@@ -2,7 +2,9 @@
 author: Scott Warchal
 date: 2018-04-24
 
-Train reset18 CNN on 300px*300px*5channel numpy stacks
+Train ResNet CNN on 300px*300px*5channel numpy stacks.
+Tensors are converted to 244*244 (w*h) to fit with the original ResNet
+architecture.
 
 command line args:
                1 => path to directory containing training test sets
@@ -141,7 +143,7 @@ def train_model(model, criterion, optimizer, lr_scheduler):
                     inputs = torch.autograd.Variable(inputs)
                     labels = torch.autograd.Variable(labels)
 
-                # zero the parameter gradients
+                # zero the parameter gradients before the forward pass
                 optimizer.zero_grad()
 
                 # forward pass
@@ -150,7 +152,7 @@ def train_model(model, criterion, optimizer, lr_scheduler):
                 labels = labels.view(-1)
                 loss = criterion(outputs, labels)
 
-                # backward + optimize only if in the training phase
+                # backprop if in the training phase
                 if phase == "train":
                     loss.backward()
                     optimizer.step()
