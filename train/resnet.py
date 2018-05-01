@@ -7,6 +7,7 @@ Shamelessly stolen from the pytorch github and adapted to work with
 """
 
 import torch.nn as nn
+import torch.nn.functional as F
 import math
 
 __all__ = ['ResNet', 'resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152']
@@ -83,7 +84,9 @@ class Bottleneck(nn.Module):
 
 class ResNet(nn.Module):
 
-    def __init__(self, block, layers, num_classes=1000):
+    def __init__(self, block, phase, layers, dropout=False, num_classes=1000):
+        self.training = True if phase == "train" else False
+        self.dropout = dropout
         self.inplanes = 64
         super(ResNet, self).__init__()
         self.conv1 = nn.Conv2d(5, 64, kernel_size=7, stride=2, padding=3,
@@ -135,6 +138,9 @@ class ResNet(nn.Module):
         x = self.layer4(x)
         ##
         x = self.avgpool(x)
+        # 50% dropout in final fully connected layer during training
+        if self.dropout:
+            x = F.dropout(x, p=0.5, training=self.training)
         x = x.view(x.size(0), -1)
         x = self.fc(x)
 
