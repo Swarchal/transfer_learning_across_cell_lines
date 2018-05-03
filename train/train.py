@@ -19,8 +19,10 @@ import datetime
 import copy
 import json
 import torch
+import torchvision
 import resnet
 import dataset
+import transforms
 
 BATCH_SIZE = 32
 NUM_EPOCHS = 50
@@ -33,12 +35,15 @@ SAVE_PATH = sys.argv[2] if len(sys.argv) == 3 else "/exports/eddie/scratch/{}/{}
 VERBOSE = True
 
 
-def make_datasets(top_level_data_dir):
+def make_datasets(top_level_data_dir, transforms=None):
     """
     Parameters:
     -----------
     top_level_data_dir: string
         directory path which contains train and test sub-directories
+    transforms: transformation dictionary (default is None)
+        if not None, then should be a dictionary of transformations, with
+        an entry for training transforms and testing transforms.
 
     Returns:
     --------
@@ -49,8 +54,24 @@ def make_datasets(top_level_data_dir):
     dataset_dict = {}
     for phase in ["train", "test"]:
         dataset_path = os.path.join(top_level_data_dir, phase)
-        dataset_dict[phase] = dataset.CellDataset(dataset_path)
+        if transforms is not None:
+            dataset_dict[phase] = dataset.CellDataset(dataset_path,
+                                                      transforms[phase])
+        else:
+            dataset_dict[phase] = dataset.CellDataset(dataset_path)
     return dataset_dict
+
+
+def make_transform_dictionary():
+    """
+    docstring
+    """
+    return {
+        "train": torchvision.transforms.Compose([
+            transforms.RandomRotate()
+        ]),
+        "test" : None # might not work
+    }
 
 
 def make_dataloaders(datasets_dict):
@@ -115,7 +136,8 @@ def train_model(model, criterion, optimizer, lr_scheduler):
     history = {"train_acc": [], "train_loss": [],
                "test_acc": [], "test_loss":[]}
 
-    datasets = make_datasets(sys.argv[1])
+    datasets = make_datasets(sys.argv[1],
+                             transforms=make_transform_dictionary())
     dataloader = make_dataloaders(datasets)
 
     for epoch in range(NUM_EPOCHS):
