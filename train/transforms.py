@@ -21,7 +21,7 @@ class RandomRotate(object):
         n_rotations = random.choice([1, 2, 3, 4])
         if n_rotations == 4:
             # no point in tranposing 4 times, just return the un-rotated image
-            return image, sample
+            return image, label
         else:
             # transpose the last two dimensions
             # as image dimensions might be:
