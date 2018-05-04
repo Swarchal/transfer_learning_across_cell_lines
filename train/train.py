@@ -57,7 +57,7 @@ def make_datasets(top_level_data_dir, transforms=None):
         if transforms is not None:
             dataset_dict[phase] = dataset.CellDataset(
                 dataset_path,
-                transform=transforms if phase == "train" else None
+                transforms=transforms if phase == "train" else None
             )
         else:
             dataset_dict[phase] = dataset.CellDataset(dataset_path)
