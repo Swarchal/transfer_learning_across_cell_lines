@@ -55,23 +55,13 @@ def make_datasets(top_level_data_dir, transforms=None):
     for phase in ["train", "test"]:
         dataset_path = os.path.join(top_level_data_dir, phase)
         if transforms is not None:
-            dataset_dict[phase] = dataset.CellDataset(dataset_path,
-                                                      transforms[phase])
+            phase_dict[phase] = dataset.CellDataset(
+                dataset_path,
+                transform=transforms if phase == "train" else None
+            )
         else:
             dataset_dict[phase] = dataset.CellDataset(dataset_path)
     return dataset_dict
-
-
-def make_transform_dictionary():
-    """
-    docstring
-    """
-    return {
-        "train": torchvision.transforms.Compose([
-            transforms.RandomRotate()
-        ]),
-        "test" : None # might not work
-    }
 
 
 def make_dataloaders(datasets_dict):
@@ -135,9 +125,9 @@ def train_model(model, criterion, optimizer, lr_scheduler):
     best_acc = 0.0
     history = {"train_acc": [], "train_loss": [],
                "test_acc": [], "test_loss":[]}
-
-    datasets = make_datasets(sys.argv[1],
-                             transforms=make_transform_dictionary())
+    transform = transforms.RandomRotate()
+    datasets = make_datasets(sys.argv[1], transforms=transform)
+    ##
     dataloader = make_dataloaders(datasets)
 
     for epoch in range(NUM_EPOCHS):
@@ -216,7 +206,8 @@ def main():
         n_gpus = torch.cuda.device_count()
         if n_gpus > 1:
             # parallelise across multiple GPUs
-            print("Splitting batches across {} GPUs".format(n_gpus))
+            print("Multiple GPUs detected:")
+            print("\tsplitting batches across {} GPUs".format(n_gpus))
             model_ft = torch.nn.DataParallel(model_ft)
         model_ft = model_ft.cuda()
     criterion = torch.nn.CrossEntropyLoss()
