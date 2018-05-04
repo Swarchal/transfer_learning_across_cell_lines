@@ -213,6 +213,11 @@ def train_model(model, criterion, optimizer, lr_scheduler):
 def main():
     model_ft = resnet.resnet18(num_classes=NUM_CLASSES)
     if USE_GPU:
+        n_gpus = torch.cuda.device_count()
+        if n_gpus > 1:
+            # parallelise across multiple GPUs
+            print("Splitting batches across {} GPUs".format(n_gpus))
+            model_ft = torch.nn.DataParallel(model_ft)
         model_ft = model_ft.cuda()
     criterion = torch.nn.CrossEntropyLoss()
     optimizer_ft = torch.optim.Adam(model_ft.parameters(), lr=0.001)
