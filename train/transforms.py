@@ -15,13 +15,12 @@ class RandomRotate(object):
 
     def __init__(self):
         pass
-    
-    def __call__(self, sample):
-        image, label = sample
+
+    def __call__(self, image):
         n_rotations = random.choice([1, 2, 3, 4])
         if n_rotations == 4:
             # no point in tranposing 4 times, just return the un-rotated image
-            return image, label
+            return image
         else:
             # transpose the last two dimensions
             # as image dimensions might be:
@@ -43,5 +42,5 @@ class RandomRotate(object):
             # if 180 degree rotation should be able to flip image vertically
             for i in range(n_rotations):
                 image = torch.transpose(image, width_index, height_index)
-            return image, label
+            return image
 
