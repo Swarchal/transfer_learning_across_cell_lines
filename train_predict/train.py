@@ -123,8 +123,8 @@ def train_model(model, criterion, optimizer, lr_scheduler):
             print("\n")
 
             # epoch stats for train and validation phases
-            epoch_loss = running_loss / len_data
-            epoch_acc  = running_corrects / len_data
+            epoch_loss = float(running_loss / len_data)
+            epoch_acc  = float(running_corrects / len_data)
             history["{}_acc".format(phase)].append(epoch_acc)
             history["{}_loss".format(phase)].append(epoch_loss)
             print("{} Loss: {:.4f} | Acc: {:.4f}".format(phase, epoch_loss, epoch_acc))
