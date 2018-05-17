@@ -1,5 +1,6 @@
 """module docstring"""
 
+import os
 import sys
 from collections import OrderedDict, deque
 import torch
@@ -56,7 +57,8 @@ def make_label_dict(data_dir):
     dictionary:
         {index => int: class_label => string}
     """
-    dataset = data_utils.CellDataset(data_dir)
+    path = os.path.join(data_dir, "test")
+    dataset = data_utils.CellDataset(path)
     # reverse {label: index} dict used within CellDataset class
     return {v: k for k, v in dataset.label_dict.items()}
 
@@ -68,7 +70,7 @@ def main():
     model = resnet.resnet18(num_classes=NUM_CLASSES)
     model = load_model_weights(model, path_to_weights, use_gpu=USE_GPU)
     dataset = data_utils.make_datasets(data_dir)
-    dataloader = data_utils.make_dataloaders(dataset)
+    dataloader = data_utils.make_dataloaders(dataset)["test"]
     label_dict = make_label_dict(data_dir)
     actual_labels, predicted_labels = deque(), deque()
     predicted_labels = []
@@ -76,16 +78,18 @@ def main():
         inputs, labels = batch
         if USE_GPU:
             inputs = torch.autograd.Variable(inputs.cuda())
-            labels = torch.autograd.Variable(inputs.cuda())
+            labels = torch.autograd.Variable(labels.cuda())
         else:
             inputs = torch.autograd.Variable(inputs)
-            labels = torch.autograd.Variable(inputs)
+            labels = torch.autograd.Variable(labels)
         outputs = model(inputs)
-        _, preds = torch.max(outputs, batch, 1)
+        _, preds = torch.max(outputs.data, 1)
         labels = labels.view(-1)
-        actual_labels.append(label_dict[labels])
-        predicted_labels.append(label_dict[preds])
-    return list(actual_labels), list(predicted_labels)
+        batch_actual_labels = [label_dict[i.data[0]] for i in list(labels)]
+        actual_labels.extend(batch_actual_labels)
+        batch_predicted_labels = [label_dict[i] for i in list(preds)]
+        predicted_labels.append(batch_predicted_labels)
+    return list(zip(predicted_labels, actual_labels))
 
 
 if __name__ == "__main__":
