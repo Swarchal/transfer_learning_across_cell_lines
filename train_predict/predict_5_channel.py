@@ -10,7 +10,7 @@ arg2: path to model checkpoint
 
 import os
 import sys
-from collections import OrderedDict, deque
+from collections import OrderedDict
 import torch
 import resnet
 import data_utils
@@ -76,6 +76,28 @@ def make_label_dict(data_dir):
     return {v: k for k, v in dataset.label_dict.items()}
 
 
+def parse_name(name):
+    """
+    extract the important stuff from the array filename.
+    Returning the parent image the file is from.
+
+    Parameters:
+    ------------
+    name: string
+        file path of the numpy array
+    
+    Returns:
+    ---------
+    string:
+        e.g "MCF7_img_13_90.npy"
+        will return "MCF7_13"
+    """
+    # remove the file suffix
+    assert name.endswith(".npy")
+    cell_line, _, img_num, _ = name.split(".")[0].split("_")
+    return "_".join([cell_line, img_num])
+
+
 def main():
     """docstring"""
     data_dir, path_to_weights = sys.argv[1:]
@@ -84,8 +106,7 @@ def main():
     dataset = data_utils.make_datasets(data_dir, return_name=True)
     dataloader = data_utils.make_dataloaders(dataset)["test"]
     label_dict = make_label_dict(data_dir)
-    names, actual_labels, predicted_labels = deque(), deque(), deque()
-    predicted_labels = []
+    print("predicted", "actual", "img_name", sep="\t")
     for batch in dataloader:
         inputs, labels, img_names = batch
         if USE_GPU:
@@ -97,16 +118,14 @@ def main():
         outputs = model(inputs)
         _, preds = torch.max(outputs.data, 1)
         labels = labels.view(-1)
-        names.extend(img_names)
+        parsed_img_names = [parse_name(i) for i in img_names]
         batch_actual_labels = [label_dict[i.data[0]] for i in list(labels)]
-        actual_labels.extend(batch_actual_labels)
         batch_predicted_labels = [label_dict[i] for i in list(preds)]
-        predicted_labels.append(batch_predicted_labels)
-    # TODO: get image names from DataLoader
-    # so it's possible to record the parent image the prediction is from
-    # to construct a consensus classification of the overall image
-    return list(zip(predicted_labels, actual_labels, names))
+        for predicted, actual, img_name in zip(batch_predicted_labels,
+                                               batch_actual_labels,
+                                               parsed_img_names):
+            print(predicted, actual, img_name, sep="\t", flush=True)
 
 
 if __name__ == "__main__":
-    print(main())
+    main()
