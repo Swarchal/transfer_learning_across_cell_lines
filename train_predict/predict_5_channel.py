@@ -25,7 +25,12 @@ def load_model_weights(model, path_to_state_dict, use_gpu=True):
     ---------
     pytorch model with weights loaded from state_dict
     """
-    model_state = torch.load(path_to_state_dict)
+    if USE_GPU:
+        # as models were trained on a GPU
+        model_state = torch.load(path_to_state_dict)
+    else:
+        model_state = torch.load(path_to_state_dict,
+                                 map_location=lambda storage, loc: "cpu")
     # if the state_dict was trained across multiple GPU's then the state_dict
     # keys are prefixed with 'module.', which will not match the keys
     # of the new model, when we try to load the model state,
@@ -66,7 +71,6 @@ def make_label_dict(data_dir):
 def main():
     """docstring"""
     data_dir, path_to_weights = sys.argv[1:]
-    # FIXME: need to move model to gpu or cpu??
     model = resnet.resnet18(num_classes=NUM_CLASSES)
     model = load_model_weights(model, path_to_weights, use_gpu=USE_GPU)
     dataset = data_utils.make_datasets(data_dir)
