@@ -45,12 +45,13 @@ class CellDataset(torch.utils.data.Dataset):
         path = "/path/to/all_data"
         datasets = {x: CellDataset(os.path.join(path, x) for x in ["train", "test])}
     """
-    def __init__(self, data_dir, transforms=None):
+    def __init__(self, data_dir, transforms=None, return_name=False):
         self.data_dir = data_dir
         self.image_list = self.get_image_list(data_dir)
         self.label_dict = self.generate_label_dict(self.image_list)
         self.labels = self.get_unique_labels(self.image_list)
         self.transforms = transforms
+        self.return_name = return_name
 
     def __len__(self):
         return len(self.image_list)
@@ -62,7 +63,11 @@ class CellDataset(torch.utils.data.Dataset):
             img = self.transforms(img)
         label_name = self.get_class_label(self.image_list[index])
         label_index = torch.IntTensor([self.label_dict[label_name]])
-        return img, label_index
+        if self.return_name:
+            name = self.image_list[index].split(os.sep)[-1]
+            return img, label_index, name
+        else:
+            return img, label_index
 
     @staticmethod
     def get_image_list(data_dir):
@@ -103,7 +108,7 @@ class CellDataset(torch.utils.data.Dataset):
         return Tensor(img).permute(2, 0, 1)
 
 
-def make_datasets(top_level_data_dir, transforms=None):
+def make_datasets(top_level_data_dir, transforms=None, **kwargs):
     """
     Parameters:
     -----------
@@ -126,10 +131,11 @@ def make_datasets(top_level_data_dir, transforms=None):
             print("INFO: images will be randomly rotated in training")
             dataset_dict[phase] = CellDataset(
                 dataset_path,
-                transforms=transforms if phase == "train" else None
+                transforms=transforms if phase == "train" else None,
+                **kwargs
             )
         else:
-            dataset_dict[phase] = CellDataset(dataset_path)
+            dataset_dict[phase] = CellDataset(dataset_path, **kwargs)
     return dataset_dict
 
 
