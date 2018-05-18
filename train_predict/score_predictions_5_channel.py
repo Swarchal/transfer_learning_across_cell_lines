@@ -10,7 +10,7 @@ import sklearn.metrics
 
 
 def parse_table(path, predicted_col_name="predicted", actual_col_name="actual",
-                img_name_col="img_name"):
+                img_col_name="img_name"):
     """
     read in tab-delimited table, parse into actual vs consensus prediction
     for each overall image
@@ -30,7 +30,11 @@ def parse_table(path, predicted_col_name="predicted", actual_col_name="actual",
     result = namedtuple("Output", ["actual", "predicted"])
     actual, predicted = [], []
     table = pd.read_table(path)
-    grouped = table.groupby(img_name_col)
+    # create column of unique images
+    table["unique_img_name"] = table.apply(
+        lambda x: "_".join([x[actual_col_name, x[img_col_name]]]),
+        axis=1)
+    grouped = table.groupby("unique_img_name")
     for _, group in grouped:
         unique_actual_labels = group[actual_col_name].unique()
         # each parent image should only have one MoA class for child objects
