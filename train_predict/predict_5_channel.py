@@ -34,26 +34,39 @@ def load_model_weights(model, path_to_state_dict, use_gpu=True):
     pytorch model with weights loaded from state_dict
     """
     if USE_GPU:
-        # as models were trained on a GPU
+        # models were trained on a GPU, so good to go
         model_state = torch.load(path_to_state_dict)
     else:
+        # need to map storage loc to 'cpu' if not using GPUs for prediction
         model_state = torch.load(path_to_state_dict,
                                  map_location=lambda storage, loc: "cpu")
-    # if the state_dict was trained across multiple GPU's then the state_dict
-    # keys are prefixed with 'module.', which will not match the keys
-    # of the new model, when we try to load the model state,
-    # so these need to be removed
-    if all(k.startswith("module.") for k in model_state.keys()):
-        new_state_dict = OrderedDict()
-        for key, value in model_state.items():
-            key = key[7:]  # skip "module." in key name
-            new_state_dict[key] = value
-        model_state = new_state_dict
+    if is_distributed_model(model_state):
+        model_state = strip_distributed_keys(model_state)
     model.load_state_dict(model_state)
     model.eval()
     if use_gpu:
         model = model.cuda()
     return model
+
+
+def is_distributed_model(state_dict):
+    """
+    determines if the state dict is from a model trained on distributed GPUs
+    """
+    return all(k.startswith("module.") for k in state_dict.keys())
+
+
+def strip_distributed_keys(state_dict):
+    """
+    if the state_dict was trained across multiple GPU's then the state_dict
+    keys are prefixed with 'module.', which will not match the keys
+    of the new model, when we try to load the model state
+    """
+    new_state_dict = OrderedDict()
+    for key, value in state_dict.items():
+        key = key[7:]  # skip "module." in key name
+        new_state_dict[key] = value
+    return new_state_dict
 
 
 def make_label_dict(data_dir):
