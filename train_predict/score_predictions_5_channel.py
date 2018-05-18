@@ -32,7 +32,7 @@ def parse_table(path, predicted_col_name="predicted", actual_col_name="actual",
     table = pd.read_table(path)
     # create column of unique images
     table["unique_img_name"] = table.apply(
-        lambda x: "_".join([x[actual_col_name, x[img_col_name]]]),
+        lambda x: "_".join([x[actual_col_name], x[img_col_name]]),
         axis=1)
     grouped = table.groupby("unique_img_name")
     for _, group in grouped:
@@ -56,6 +56,14 @@ def consensus(labels):
     return Counter(labels).most_common()[0][0]
 
 
+def get_class_labels(labels):
+    """
+    return a list of alphabetically sorted class labels, the same order
+    as the confusion matrix labels
+    """
+    return sorted(list(set(labels)))
+
+
 def make_confusion_matrix(actual, predicted, norm=True):
     """
     create a confusion matrix and class labels
@@ -68,10 +76,13 @@ def make_confusion_matrix(actual, predicted, norm=True):
         labels: list
             class labels in correct order
     """
-    confusion_matrix_container = namedtuple("ConfusionMatrix", ["cm", "labels"])
+    confusion_matrix_container = namedtuple("ConfusionMatrix",
+                                            ["cm", "labels", "acc"])
     cm = sklearn.metrics.confusion_matrix(actual, predicted)
+    labels = get_class_labels(actual)
+    acc = accuracy(actual, predicted)
     if norm:
         cm = cm.astype("float") / cm.sum(axis=1)[:, np.newaxis]
-    return confusion_matrix_container(cm labels)
+    return confusion_matrix_container(cm, labels, acc)
 
 
