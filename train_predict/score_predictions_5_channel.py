@@ -3,7 +3,6 @@ module docstring
 """
 
 from collections import Counter, namedtuple
-import json
 import numpy as np
 import pandas as pd
 import sklearn.metrics
@@ -30,7 +29,9 @@ def parse_table(path, predicted_col_name="predicted", actual_col_name="actual",
     result = namedtuple("Output", ["actual", "predicted"])
     actual, predicted = [], []
     table = pd.read_table(path)
-    # create column of unique images
+    # as the image names are duplicated for each MoA class, need to create
+    # column of unique names for each image by joining the MoA class label
+    # with the image name.
     table["unique_img_name"] = table.apply(
         lambda x: "_".join([x[actual_col_name], x[img_col_name]]),
         axis=1)
@@ -46,14 +47,9 @@ def parse_table(path, predicted_col_name="predicted", actual_col_name="actual",
     return result(actual, predicted)
 
 
-def accuracy(actual, predicted):
-    """return accuracy"""
-    return sklearn.metrics.accuracy_score(actual, predicted)
-
-
-def consensus(labels):
+def consensus(predicted_labels):
     """return the most common label"""
-    return Counter(labels).most_common()[0][0]
+    return Counter(predicted_labels).most_common()[0][0]
 
 
 def get_class_labels(labels):
@@ -70,19 +66,21 @@ def make_confusion_matrix(actual, predicted, norm=True):
 
     Returns:
     ---------
-    namedtuple(cm, labels)
+    namedtuple(cm, labels, acc)
         cm: numpy array
             confusion matrix
         labels: list
             class labels in correct order
+        acc: float
+            classification accuracy as determined by
+            sklearn.metrics.accuracy_score
     """
     confusion_matrix_container = namedtuple("ConfusionMatrix",
                                             ["cm", "labels", "acc"])
     cm = sklearn.metrics.confusion_matrix(actual, predicted)
     labels = get_class_labels(actual)
-    acc = accuracy(actual, predicted)
+    acc = sklearn.metrics.accuracy_score(actual, predicted)
     if norm:
         cm = cm.astype("float") / cm.sum(axis=1)[:, np.newaxis]
     return confusion_matrix_container(cm, labels, acc)
-
 
