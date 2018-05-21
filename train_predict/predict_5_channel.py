@@ -39,7 +39,7 @@ def load_model_weights(model, path_to_state_dict, use_gpu=True):
     else:
         # need to map storage loc to 'cpu' if not using GPUs for prediction
         model_state = torch.load(path_to_state_dict,
-                                 map_location=lambda storage, loc: "cpu")
+                                 map_location=lambda storage, loc: storage)
     if is_distributed_model(model_state):
         model_state = strip_distributed_keys(model_state)
     model.load_state_dict(model_state)
