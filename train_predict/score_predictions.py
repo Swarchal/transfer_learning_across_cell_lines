@@ -25,7 +25,7 @@ def create_data_dict(directory):
 def get_actual_predicted(dataframe):
     output = namedtuple("output", ["actual", "predicted"])
     actual, predicted = [], []
-    for name, group in dataframe.groupby(["actual", "img_num"]):
+    for _, group in dataframe.groupby(["actual", "img_num"]):
         actual_class = group["actual"].unique()[0]
         predicted_class = Counter(group["predicted"]).most_common()[0][0]
         actual.append(actual_class)
